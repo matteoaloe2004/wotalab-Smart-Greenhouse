@@ -5,13 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WoT Smart Greenhouse - Dashboard</title>
-  <!-- Google Fonts: Outfit (Titoli, numeri, pulsanti) e Inter (testo) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
-  <!-- Chart.js da CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -746,12 +744,15 @@
       gap: 0.3rem;
       transition: color 0.2s;
     }
+
     .card.temp .card-title-link:hover {
       color: var(--accent);
     }
+
     .card.hum .card-title-link:hover {
       color: var(--secondary);
     }
+
     .card.pump .card-title-link:hover {
       color: var(--cyan);
     }
