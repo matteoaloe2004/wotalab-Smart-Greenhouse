@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # 1. Broker MQTT (Mosquitto)
+  # Gestisce la pubblicazione degli eventi di temperatura e umidità dal sensore.
+  broker:
+    image: eclipse-mosquitto:latest
+    container_name: greenhouse-mqtt-broker
+    ports:
+      - "1883:1883" # Espone il broker sulla porta 1883 dell'host per eventuale debug (es. con MQTT Explorer)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf # Monta la configurazione personalizzata per abilitare l'accesso anonimo
+    restart: always
+
+  # 2. Applicazione Serra WoT (Sensore + Dashboard + Pompa + Gateway)
+  # Questa immagine viene compilata usando il Dockerfile locale.
+  app:
+    build: .
+    container_name: greenhouse-wot-app
+    ports:
+      - "8080:8080" # Porta HTTP per l'Exposed Thing del Sensore
+      - "8081:8081" # Porta HTTP per visualizzare la Dashboard nel browser dell'host
+      - "8082:8082" # Porta HTTP per l'Exposed Thing della Pompa (con sicurezza attiva)
+    environment:
+      - MQTT_BROKER=mqtt://broker:1883 # Definisce l'URI del broker riferendosi al servizio 'broker' della rete Docker
+      - TELEMETRY_INTERVAL=10000 # Intervallo di campionamento del sensore in millisecondi (es. 10000 per 10 secondi)
+    depends_on:
+      - broker # Assicura che il broker si avvii prima dell'applicazione
+    restart: always

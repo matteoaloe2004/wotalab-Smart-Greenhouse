@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Console Pompa - WoT Smart Greenhouse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #060913;
+      --card-bg: rgba(13, 20, 38, 0.45);
+      --card-border: rgba(255, 255, 255, 0.05);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #06b6d4;
+      --glow-accent: rgba(6, 182, 212, 0.15);
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      background-image: 
+        radial-gradient(circle at 10% 20%, var(--glow-accent) 0%, transparent 40%);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      margin: 0;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .btn-back {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Stili Login / Token */
+    .login-container {
+      text-align: center;
+      max-width: 450px;
+      margin: 4rem auto;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"] {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--glow-accent);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.8rem 1.5rem;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.88rem;
+      margin-top: 0.5rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    /* Console Panel Styles */
+    .hidden {
+      display: none !important;
+    }
+
+    .status-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+    }
+
+    .status-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.4rem 1.2rem;
+      border-radius: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge.off {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+    }
+
+    .status-badge.on {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      box-shadow: 0 0 20px var(--glow-accent);
+      animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 5px var(--glow-accent); }
+      50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.35); }
+      100% { box-shadow: 0 0 5px var(--glow-accent); }
+    }
+
+    .tester-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      flex-grow: 1;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .info-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .info-val {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      overflow-x: auto;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
+      padding: 0.5rem 0.8rem;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Console Sicurezza Pompa</h1>
+        <p style="color: var(--text-muted); margin: 0.3rem 0 0 0; font-size: 0.9rem;">Pannello di controllo ad accesso protetto tramite token</p>
+      </div>
+      <a href="/dashboard" class="btn-back">← Dashboard</a>
+    </header>
+
+    <!-- SCHERMATA LOGIN TOKEN -->
+    <div class="card login-container" id="login-panel">
+      <div class="card-title">Autenticazione Richiesta</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Questo endpoint richiede una chiave Bearer Token API per convalidare l'accesso ed eseguire comandi sulla pompa.
+      </p>
+      <div class="input-group">
+        <label class="info-label" for="token-input">Inserisci Bearer Token</label>
+        <input type="text" id="token-input" placeholder="Esempio: chiave-segreta-pompa" autocomplete="off">
+        <span class="error-msg" id="login-error">Errore di autenticazione</span>
+      </div>
+      <button class="btn" onclick="validateAndUnlock()">Sblocca Console</button>
+    </div>
+
+    <!-- SCHERMATA PRINCIPALE CONSOLE (Nascosta inizialmente) -->
+    <div id="console-panel" class="hidden">
+      <!-- Card Stato -->
+      <div class="card">
+        <div class="status-section">
+          <div>
+            <div class="card-title" style="margin-bottom: 0.2rem;">Stato Attuatore</div>
+            <span style="color: var(--text-muted); font-size: 0.82rem;">Polling in tempo reale attivo</span>
+          </div>
+          <span class="status-badge off" id="pump-badge">SPENTA</span>
+        </div>
+      </div>
+
+      <!-- Card Azioni -->
+      <div class="card">
+        <div class="card-title">Invia Comando Azione (turnOnPump)</div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Invia una richiesta HTTP POST protetta all'endpoint di azione dell'attuatore.
+        </p>
+        <div class="tester-controls">
+          <select id="action-duration">
+            <option value="5">Attivazione rapida (5s)</option>
+            <option value="10" selected>Ciclo normale (10s)</option>
+            <option value="30">Ciclo lungo (30s)</option>
+          </select>
+          <button class="btn" id="btn-trigger" onclick="runAction()" style="width: auto; padding: 0.75rem 2rem;">Invia POST ↗</button>
+        </div>
+        <span class="error-msg" id="action-error" style="margin-top: 1rem;"></span>
+      </div>
+
+      <!-- Card Storico Attivazioni Local -->
+      <div class="card">
+        <div class="card-title">Storico Attivazioni Console</div>
+        <div class="history-list" id="activation-list">
+          <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">Nessuna attivazione eseguita in questa sessione.</div>
+        </div>
+      </div>
+
+      <!-- Card Info Endpoint -->
+      <div class="card">
+        <div class="card-title">Dettagli di Sicurezza WoT</div>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Schema di Sicurezza (TD)</span>
+            <span class="info-val">Bearer Token (Authorization Header)</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Endpoint Stato (GET)</span>
+            <span class="info-val">http://localhost:8082/greenhouse-irrigation-pump/properties/pumpStatus</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Endpoint Azione (POST)</span>
+            <span class="info-val">http://localhost:8082/greenhouse-irrigation-pump/actions/turnOnPump</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeToken = "";
+    const STATUS_URL = "http://localhost:8082/greenhouse-irrigation-pump/properties/pumpStatus";
+    const ACTION_URL = "http://localhost:8082/greenhouse-irrigation-pump/actions/turnOnPump";
+    const sessionHistory = [];
+
+    // Controlla se abbiamo già un token in sessionStorage
+    const savedToken = sessionStorage.getItem("wot_pump_token");
+    if (savedToken) {
+      activeToken = savedToken;
+      document.getElementById("token-input").value = savedToken;
+      validateAndUnlock();
+    }
+
+    async function validateAndUnlock() {
+      const token = document.getElementById("token-input").value.trim();
+      const errorSpan = document.getElementById("login-error");
+      
+      if (!token) {
+        errorSpan.innerText = "Inserisci un token valido.";
+        errorSpan.style.display = "block";
+        return;
+      }
+
+      try {
+        // Effettua una GET protetta per convalidare il token
+        const response = await fetch(STATUS_URL, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          // Token Corretto!
+          activeToken = token;
+          sessionStorage.setItem("wot_pump_token", token);
+          
+          // Nascondi Login e Mostra Console
+          document.getElementById("login-panel").classList.add("hidden");
+          document.getElementById("console-panel").classList.remove("hidden");
+          
+          // Avvia polling
+          startPolling();
+        } else {
+          // Errore 401 o altro
+          errorSpan.innerText = `Autenticazione Fallita (Codice HTTP ${response.status})`;
+          errorSpan.style.display = "block";
+        }
+      } catch (err) {
+        errorSpan.innerText = `Errore di rete: ${err.message}`;
+        errorSpan.style.display = "block";
+      }
+    }
+
+    async function checkStatus() {
+      try {
+        const response = await fetch(STATUS_URL, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${activeToken}`
+          }
+        });
+
+        if (response.ok) {
+          const isRunning = await response.json();
+          const badge = document.getElementById("pump-badge");
+          
+          if (isRunning) {
+            badge.className = "status-badge on";
+            badge.innerText = "ATTIVA";
+          } else {
+            badge.className = "status-badge off";
+            badge.innerText = "SPENTA";
+          }
+        } else if (response.status === 401) {
+          // Token revocato o scaduto a runtime
+          sessionStorage.removeItem("wot_pump_token");
+          location.reload();
+        }
+      } catch (err) {
+        console.error("Errore polling stato:", err);
+      }
+    }
+
+    async function runAction() {
+      const duration = parseInt(document.getElementById("action-duration").value);
+      const btn = document.getElementById("btn-trigger");
+      const errorMsg = document.getElementById("action-error");
+      
+      btn.disabled = true;
+      btn.innerText = "Invio in corso...";
+      errorMsg.style.display = "none";
+
+      try {
+        const response = await fetch(ACTION_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${activeToken}`
+          },
+          body: JSON.stringify(duration)
+        });
+
+        if (response.ok) {
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          sessionHistory.unshift({ time, duration });
+          
+          // Aggiorna lista storica
+          const historyDiv = document.getElementById("activation-list");
+          historyDiv.innerHTML = sessionHistory.map(item => `
+            <div class="history-item">
+              <span style="color: var(--success); font-weight: 600;">✓ Comando Inviato</span>
+              <span style="color: var(--text-main); font-weight: 500;">Attivazione: ${item.duration}s</span>
+              <span style="color: var(--text-muted); font-size: 0.75rem;">Ora: ${item.time}</span>
+            </div>
+          `).join('');
+
+          // Aggiorna stato immediatamente
+          checkStatus();
+        } else {
+          errorMsg.innerText = `Errore di attivazione (Codice HTTP ${response.status})`;
+          errorMsg.style.display = "block";
+        }
+      } catch (err) {
+        errorMsg.innerText = `Errore di connessione: ${err.message}`;
+        errorMsg.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Invia POST ↗";
+      }
+    }
+
+    function startPolling() {
+      checkStatus();
+      setInterval(checkStatus, 2000); // Polling rapido dello stato pompa
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "wot-smart-greenhouse",
+  "version": "1.0.0",
+  "description": "IoT Smart Greenhouse based on W3C Web of Things (WoT) standard",
+  "main": "dist/things/sensor-env/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/launcher.ts",
+    "start:sensor": "ts-node src/things/sensor-env/index.ts",
+    "start:pump": "ts-node src/things/actuator-pump/index.ts",
+    "start:gateway": "ts-node src/gateway.ts",
+    "start:prod": "node dist/launcher.js"
+  },
+  "dependencies": {
+    "@node-wot/core": "^0.8.2",
+    "@node-wot/binding-mqtt": "^0.8.2",
+    "@node-wot/binding-http": "^0.8.2",
+    "mqtt": "^5.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

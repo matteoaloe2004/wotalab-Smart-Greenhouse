@@ -1,0 +1,40 @@
+{
+  "@context": [
+    "https://www.w3.org/2019/wot/td/v1",
+    {
+      "sosa": "http://www.w3.org/ns/sosa/"
+    }
+  ],
+  "id": "urn:dev:wot:greenhouse-irrigation-pump-01",
+  "title": "Greenhouse Irrigation Pump",
+  "@type": "sosa:Actuator",
+  "description": "An HTTP-controlled irrigation pump actuator inside a smart greenhouse.",
+  "securityDefinitions": {
+    "api_key_sc": {
+      "scheme": "bearer"
+    }
+  },
+  "security": [
+    "api_key_sc"
+  ],
+  "properties": {
+    "pumpStatus": {
+      "type": "boolean",
+      "title": "Pump Status",
+      "description": "True if the pump is currently running, false otherwise.",
+      "readOnly": true
+    }
+  },
+  "actions": {
+    "turnOnPump": {
+      "title": "Turn On Pump",
+      "description": "Triggers the irrigation pump for a specified duration in seconds.",
+      "input": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 300,
+        "description": "Duration in seconds to run the pump."
+      }
+    }
+  }
+}

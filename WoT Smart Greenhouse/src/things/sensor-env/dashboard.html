@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WoT Smart Greenhouse - Dashboard</title>
+  <!-- Google Fonts: Outfit (Titoli, numeri, pulsanti) e Inter (testo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Chart.js da CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #060913;
+      --card-bg: rgba(13, 20, 38, 0.6);
+      --card-bg-hover: rgba(18, 28, 54, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-active: rgba(6, 182, 212, 0.3);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #10b981;
+      /* Smeraldo per il sensore */
+      --secondary: #3b82f6;
+      /* Blu per l'umidità */
+      --accent: #f59e0b;
+      /* Giallo/Arancio per la temperatura */
+      --cyan: #06b6d4;
+      /* Celeste per la pompa */
+      --danger: #ef4444;
+      --glow-green: rgba(16, 185, 129, 0.12);
+      --glow-blue: rgba(59, 130, 246, 0.12);
+      --glow-cyan: rgba(6, 182, 212, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Scrollbar personalizzata premium */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      border: 2px solid transparent;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 10% 20%, var(--glow-green) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, var(--glow-blue) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, var(--glow-cyan) 0%, transparent 50%);
+      padding: 2.5rem 1.5rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Header Section */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    .header-title p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.3rem;
+      font-weight: 400;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.6rem 1.2rem;
+      border-radius: 50px;
+      border: 1px solid var(--card-border);
+      font-size: 0.85rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+      box-shadow: 0 0 8px var(--text-muted);
+      position: relative;
+    }
+
+    .status-dot.online {
+      background-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary);
+      animation: pulse-green 2s infinite;
+    }
+
+    .status-dot.offline {
+      background-color: var(--danger);
+      box-shadow: 0 0 12px var(--danger);
+      animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-green {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    @keyframes pulse-red {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Glassmorphic Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 1.8rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .card:hover {
+      background: var(--card-bg-hover);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card.temp:hover::before {
+      background: linear-gradient(90deg, var(--accent), var(--danger));
+    }
+
+    .card.hum:hover::before {
+      background: linear-gradient(90deg, #60a5fa, var(--secondary));
+    }
+
+    .card.pump:hover::before {
+      background: linear-gradient(90deg, #00f2fe, var(--cyan));
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s;
+    }
+
+    .card.temp .card-icon {
+      color: var(--accent);
+      background: rgba(245, 158, 11, 0.06);
+      border-color: rgba(245, 158, 11, 0.12);
+    }
+
+    .card.hum .card-icon {
+      color: var(--secondary);
+      background: rgba(59, 130, 246, 0.06);
+      border-color: rgba(59, 130, 246, 0.12);
+    }
+
+    .card.pump .card-icon {
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.06);
+      border-color: rgba(6, 182, 212, 0.12);
+    }
+
+    /* Active States animations */
+    .card.pump.active {
+      border-color: var(--card-border-active);
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.15);
+    }
+
+    .card.pump.active .card-icon {
+      color: #00f2fe;
+      background: rgba(6, 182, 212, 0.15);
+      border-color: rgba(6, 182, 212, 0.3);
+      animation: spin-pulse 3s infinite linear;
+    }
+
+    @keyframes spin-pulse {
+      0% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      50% {
+        transform: scale(1.1) rotate(180deg);
+      }
+
+      100% {
+        transform: scale(1) rotate(360deg);
+      }
+    }
+
+    /* Values and Gauges */
+    .value-display {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .big-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.8rem;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .unit {
+      font-size: 1.6rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .range-bar-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .range-bar {
+      height: 100%;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 1.2s cubic-bezier(0.1, 0.8, 0.2, 1);
+    }
+
+    .card.temp .range-bar {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    }
+
+    .card.hum .range-bar {
+      background: linear-gradient(90deg, #60a5fa, #3b82f6);
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Chart Section */
+    .chart-card {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 900px) {
+      .chart-card {
+        grid-column: span 1;
+      }
+    }
+
+    /* macOS Terminal Style for Event Log */
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red {
+      background: #ff5f56;
+    }
+
+    .dot-yellow {
+      background: #ffbd2e;
+    }
+
+    .dot-green {
+      background: #27c93f;
+    }
+
+    .terminal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-left: 0.5rem;
+    }
+
+    .log-container {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 1.2rem;
+      max-height: 220px;
+      overflow-y: auto;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .log-item {
+      display: flex;
+      gap: 0.8rem;
+      line-height: 1.5;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      padding-bottom: 0.25rem;
+    }
+
+    .log-time {
+      color: #6b7280;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .log-msg {
+      color: #e5e7eb;
+    }
+
+    .log-msg.info {
+      color: #60a5fa;
+    }
+
+    .log-msg.success {
+      color: #10b981;
+      font-weight: 500;
+    }
+
+    .log-msg.warning {
+      color: #f59e0b;
+    }
+
+    .log-msg.error {
+      color: #ef4444;
+      font-weight: 500;
+    }
+
+    /* Pump Controls and Form */
+    .pump-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .control-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.5rem 0.9rem;
+      border-radius: 10px;
+      outline: none;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    select:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+      border: none;
+      color: white;
+      padding: 0.8rem 1.4rem;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.45);
+      filter: brightness(1.1);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-pump.active {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-clear {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      padding: 0.3rem 0.8rem;
+      border-radius: 8px;
+      box-shadow: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-clear:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .card.pump .big-value {
+      color: #f3f4f6;
+      font-size: 3.2rem;
+      transition: all 0.3s;
+    }
+
+    .card.pump.active .big-value {
+      color: var(--cyan);
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+
+    /* Thing Description Accordion & Highlight styling */
+    .td-card {
+      grid-column: 1 / -1;
+    }
+
+    .td-header {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0;
+    }
+
+    .td-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .accordion-chevron {
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      color: var(--text-muted);
+    }
+
+    .td-card.expanded .accordion-chevron {
+      transform: rotate(180deg);
+      color: var(--text-main);
+    }
+
+    .td-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+    }
+
+    .td-card.expanded .td-content {
+      max-height: 520px;
+      overflow-y: auto;
+      transition: max-height 0.5s cubic-bezier(0.1, 0.8, 0.2, 1);
+    }
+
+    .td-wrapper {
+      position: relative;
+      margin-top: 0.8rem;
+    }
+
+    .btn-copy {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    pre {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 1.2rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      max-height: 380px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+      line-height: 1.5;
+    }
+
+    /* Highlight Colors */
+    pre span.key {
+      color: #f43f5e;
+      font-weight: 500;
+    }
+
+    /* Rose */
+    pre span.string {
+      color: #10b981;
+    }
+
+    /* Emerald */
+    pre span.number {
+      color: #f59e0b;
+    }
+
+    /* Amber */
+    pre span.boolean {
+      color: #3b82f6;
+    }
+
+    /* Blue */
+    pre span.null {
+      color: #9ca3af;
+    }
+
+    /* Muted */
+
+    svg {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Ultime 5 letture styles */
+    .history-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.8rem;
+      margin-top: 0.4rem;
+    }
+
+    .history-list-title {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 0.2rem 0.45rem;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .history-item .val {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .history-item .time {
+      color: #6b7280;
+      font-size: 0.72rem;
+    }
+
+    /* Stile per i link degli endpoint sulle card */
+    .card-title-link {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color 0.2s;
+    }
+    .card.temp .card-title-link:hover {
+      color: var(--accent);
+    }
+    .card.hum .card-title-link:hover {
+      color: var(--secondary);
+    }
+    .card.pump .card-title-link:hover {
+      color: var(--cyan);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- Top Header -->
+    <header>
+      <div class="header-title">
+        <h1>WoT Smart Greenhouse</h1>
+        <p>Monitoraggio Ambientale in tempo reale basato su Standard W3C Web of Things</p>
+      </div>
+      <div class="status-badge" id="status-badge">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Connessione in corso...</span>
+      </div>
+    </header>
+
+    <!-- Grid Layout -->
+    <div class="dashboard-grid">
+
+      <!-- Temperature Card -->
+      <div class="card temp">
+        <div class="card-header">
+          <a href="/temperature" target="_blank" class="card-title-link" title="Apri Console Interattiva Temperatura">
+            <span class="card-title">Temperatura Aria ↗</span>
+          </a>
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="value-display">
+          <span class="big-value" id="temp-value" style="color: var(--accent);">--.-</span>
+          <span class="unit">°C</span>
+        </div>
+        <div class="range-bar-container">
+          <div class="range-bar" id="temp-bar"></div>
+        </div>
+        <div class="card-footer">
+          <span>Min: 20°C</span>
+          <span>Max: 35°C</span>
+        </div>
+        <!-- Ultime 5 letture -->
+        <div class="history-list-container">
+          <span class="history-list-title">Ultime 5 letture</span>
+          <div class="history-list" id="temp-last-five">
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Humidity Card -->
+      <div class="card hum">
+        <div class="card-header">
+          <a href="/humidity" target="_blank" class="card-title-link" title="Apri Console Interattiva Umidità">
+            <span class="card-title">Umidità Suolo ↗</span>
+          </a>
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="value-display">
+          <span class="big-value" id="hum-value" style="color: #60a5fa;">--.-</span>
+          <span class="unit">%</span>
+        </div>
+        <div class="range-bar-container">
+          <div class="range-bar" id="hum-bar"></div>
+        </div>
+        <div class="card-footer">
+          <span>Min: 10%</span>
+          <span>Max: 60%</span>
+        </div>
+        <!-- Ultime 5 letture -->
+        <div class="history-list-container">
+          <span class="history-list-title">Ultime 5 letture</span>
+          <div class="history-list" id="hum-last-five">
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+            <div class="history-item"><span class="val">--</span><span class="time">--:--:--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pump Card -->
+      <div class="card pump" id="pump-card">
+        <div class="card-header">
+          <a href="/pump" target="_blank" class="card-title-link" title="Apri Console Sicurezza Pompa (Richiede Token)">
+            <span class="card-title">Pompa Irrigazione ↗</span>
+          </a>
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+              <circle cx="12" cy="14" r="2"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="value-display">
+          <span class="big-value" id="pump-value">SPENTA</span>
+        </div>
+        <div class="pump-controls">
+          <div class="control-group">
+            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Durata irrigazione:</span>
+            <select id="pump-duration">
+              <option value="5">5 Secondi</option>
+              <option value="10" selected>10 Secondi</option>
+              <option value="30">30 Secondi</option>
+              <option value="60">60 Secondi</option>
+            </select>
+          </div>
+          <button class="btn btn-pump" id="btn-pump" onclick="triggerPump()">Avvia Irrigazione</button>
+        </div>
+        <div class="card-footer">
+          <span>Stato: <span id="pump-status-badge" style="font-weight: 600;">Verifica...</span></span>
+          <span>Porta: 8082</span>
+        </div>
+      </div>
+
+      <!-- Chart Card -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <span class="card-title">Trend Storico (Ultime 15 letture)</span>
+        </div>
+        <div style="position: relative; height: 230px; width: 100%;">
+          <canvas id="liveChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Event Log Card (macOS Style) -->
+      <div class="card chart-card">
+        <div class="card-header" style="justify-content: space-between; align-items: center;">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="terminal-dot dot-red"></div>
+              <div class="terminal-dot dot-yellow"></div>
+              <div class="terminal-dot dot-green"></div>
+            </div>
+            <span class="terminal-title">Log Storico Eventi & Attivazioni</span>
+          </div>
+          <button class="btn-clear" onclick="clearLogs()">Svuota</button>
+        </div>
+        <div class="log-container" id="log-container">
+          <!-- I log verranno inseriti dinamicamente qui -->
+        </div>
+      </div>
+
+      <!-- Thing Description Explorer Card -->
+      <div class="card td-card" id="td-card">
+        <div class="td-header" onclick="toggleAccordion()">
+          <h2>W3C Thing Description Explorer</h2>
+          <div class="accordion-chevron">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="td-content">
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.8rem; margin-top: 0.4rem;">
+            Questo è il documento semantico JSON-LD recuperato direttamente dall'endpoint HTTP
+            del Servient locale: <a href="http://localhost:8080/greenhouse-environmental-sensor" target="_blank"
+              style="color: #60a5fa; text-decoration: none; font-weight: 500;">http://localhost:8080/greenhouse-environmental-sensor</a>
+          </p>
+          <div class="td-wrapper">
+            <button class="btn-copy" onclick="copyTD()">Copia JSON</button>
+            <pre><code id="td-code">Caricamento in corso...</code></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Configurazione Endpoint WoT locali
+    const BASE_URL = "http://localhost:8080/greenhouse-environmental-sensor";
+    const TEMP_URL = `${BASE_URL}/properties/temperature`;
+    const HUM_URL = `${BASE_URL}/properties/humidity`;
+
+    const PUMP_BASE_URL = "http://localhost:8082/greenhouse-irrigation-pump";
+    const PUMP_STATUS_URL = `${PUMP_BASE_URL}/properties/pumpStatus`;
+    const PUMP_ACTION_URL = `${PUMP_BASE_URL}/actions/turnOnPump`;
+    const PUMP_TOKEN = "chiave-segreta-pompa";
+
+    // Intervalli di polling della dashboard (in millisecondi)
+    const SENSOR_POLLING_INTERVAL = 10000; // Aggiorna temperatura e umidità (10s)
+    const PUMP_POLLING_INTERVAL = 10000;   // Controlla lo stato della pompa (10s)
+
+    // Inizializzazione Dati Storici e Stati
+    const maxDataPoints = 15;
+    const labels = [];
+    const tempHistory = [];
+    const humHistory = [];
+
+    // Array per gli ultimi 5 dati ricevuti
+    const lastFiveTemps = [];
+    const lastFiveHums = [];
+
+    let lastTemp = null;
+    let lastHum = null;
+    let lastPumpStatus = null;
+    let cachedTdString = "";
+
+    for (let i = 0; i < maxDataPoints; i++) {
+      labels.push("");
+      tempHistory.push(null);
+      humHistory.push(null);
+    }
+
+    // Configurazione Grafico Chart.js
+    const ctx = document.getElementById('liveChart').getContext('2d');
+
+    // Gradienti di colore per il grafico
+    const tempGradient = ctx.createLinearGradient(0, 0, 0, 200);
+    tempGradient.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+    tempGradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+    const humGradient = ctx.createLinearGradient(0, 0, 0, 200);
+    humGradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
+    humGradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Temperatura (°C)',
+            data: tempHistory,
+            borderColor: '#f59e0b',
+            backgroundColor: tempGradient,
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#f59e0b',
+            pointBorderColor: 'rgba(255,255,255,0.1)',
+            pointHoverRadius: 6,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Umidità (%)',
+            data: humHistory,
+            borderColor: '#3b82f6',
+            backgroundColor: humGradient,
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: 'rgba(255,255,255,0.1)',
+            pointHoverRadius: 6,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#9ca3af',
+              font: { family: 'Outfit', size: 12, weight: '500' }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#6b7280', font: { family: 'Inter', size: 10 } }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            min: 15,
+            max: 40,
+            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+            ticks: { color: '#9ca3af', font: { family: 'Outfit', size: 11 } }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            min: 0,
+            max: 70,
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#9ca3af', font: { family: 'Outfit', size: 11 } }
+          }
+        }
+      }
+    });
+
+    // Funzione helper per JSON Syntax Highlighting
+    function syntaxHighlight(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, undefined, 2);
+      }
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+        let cls = 'number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'key';
+          } else {
+            cls = 'string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'boolean';
+        } else if (/null/.test(match)) {
+          cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    // Funzione helper per aggiungere i log a schermo
+    function addLog(message, type = 'info') {
+      const logContainer = document.getElementById('log-container');
+      if (!logContainer) return;
+
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const logItem = document.createElement('div');
+      logItem.className = 'log-item';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.innerText = `[${now}]`;
+
+      const msgSpan = document.createElement('span');
+      msgSpan.className = `log-msg ${type}`;
+      msgSpan.innerText = message;
+
+      logItem.appendChild(timeSpan);
+      logItem.appendChild(msgSpan);
+
+      logContainer.appendChild(logItem);
+
+      // Mantieni massimo 50 log
+      while (logContainer.children.length > 50) {
+        logContainer.removeChild(logContainer.firstChild);
+      }
+
+      // Scroll in fondo
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function clearLogs() {
+      const logContainer = document.getElementById('log-container');
+      if (logContainer) logContainer.innerHTML = '';
+      addLog("Storico dei log ripulito.", "info");
+    }
+
+    // Funzione per espandere/comprimere la visualizzazione della TD
+    function toggleAccordion() {
+      const card = document.getElementById('td-card');
+      card.classList.toggle('expanded');
+    }
+
+    // Funzione per copiare la TD negli appunti
+    function copyTD() {
+      if (!cachedTdString) return;
+      navigator.clipboard.writeText(cachedTdString).then(() => {
+        addLog("Thing Description copiata negli appunti con successo!", "success");
+        const btn = document.querySelector('.btn-copy');
+        btn.innerText = "Copiato!";
+        setTimeout(() => { btn.innerText = "Copia JSON"; }, 2000);
+      }).catch(err => {
+        addLog("Errore nella copia negli appunti.", "error");
+      });
+    }
+
+    // Funzione per aggiornare gli elementi grafici (barra di progresso e colore)
+    function updateBar(elementId, value, min, max) {
+      const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+      document.getElementById(elementId).style.width = `${percentage}%`;
+    }
+
+    // Funzione per renderizzare la lista degli ultimi 5 dati ricevuti
+    function renderLastFive(elementId, dataArray) {
+      const container = document.getElementById(elementId);
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      const displayData = [...dataArray];
+      while (displayData.length < 5) {
+        displayData.push({ value: "--", time: "--:--:--" });
+      }
+
+      displayData.forEach(item => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "history-item";
+
+        const valSpan = document.createElement("span");
+        valSpan.className = "val";
+        valSpan.innerText = item.value;
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "time";
+        timeSpan.innerText = item.time;
+
+        itemDiv.appendChild(valSpan);
+        itemDiv.appendChild(timeSpan);
+        container.appendChild(itemDiv);
+      });
+    }
+
+    // Aggiornamento dello Stato di Connessione della Dashboard
+    function setOnlineStatus(isOnline) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+
+      if (isOnline) {
+        dot.className = "status-dot online";
+        text.innerText = "Online (Connesso a WoT HTTP)";
+        text.style.color = "var(--primary)";
+      } else {
+        dot.className = "status-dot offline";
+        text.innerText = "Offline (Tentativo di connessione...)";
+        text.style.color = "var(--danger)";
+      }
+    }
+
+    // Carica la Thing Description una sola volta all'avvio
+    async function fetchThingDescription() {
+      try {
+        const response = await fetch(BASE_URL);
+        if (response.ok) {
+          const tdData = await response.json();
+          cachedTdString = JSON.stringify(tdData, null, 2);
+          document.getElementById('td-code').innerHTML = syntaxHighlight(tdData);
+        }
+      } catch (err) {
+        document.getElementById('td-code').innerText = "Errore durante il recupero della Thing Description. Assicurati che il Producer sia attivo.";
+      }
+    }
+
+    // Funzione principale di Polling dei Dati
+    async function updateDashboardData() {
+      try {
+        // Lettura in parallelo di Temperatura e Umidità dal server HTTP WoT
+        const [tempResponse, humResponse] = await Promise.all([
+          fetch(TEMP_URL),
+          fetch(HUM_URL)
+        ]);
+
+        if (tempResponse.ok && humResponse.ok) {
+          const temp = await tempResponse.json();
+          const hum = await humResponse.json();
+
+          const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          // Popola lo storico delle ultime 5 letture prima di aggiornare i valori correnti
+          if (temp !== lastTemp || lastTemp === null) {
+            lastFiveTemps.unshift({ value: temp.toFixed(1) + " °C", time: nowTime });
+            if (lastFiveTemps.length > 5) lastFiveTemps.pop();
+            renderLastFive("temp-last-five", lastFiveTemps);
+          }
+
+          if (hum !== lastHum || lastHum === null) {
+            lastFiveHums.unshift({ value: hum.toFixed(1) + " %", time: nowTime });
+            if (lastFiveHums.length > 5) lastFiveHums.pop();
+            renderLastFive("hum-last-five", lastFiveHums);
+          }
+
+          // Controlla se i valori sono cambiati rispetto all'ultima lettura per loggarli
+          if (temp !== lastTemp || hum !== lastHum) {
+            addLog(`Sensori -> Temp: ${temp.toFixed(2)}°C, Umidità: ${hum.toFixed(2)}%`, "info");
+            lastTemp = temp;
+            lastHum = hum;
+          }
+
+          // Aggiorna Interfaccia Numerica
+          document.getElementById('temp-value').innerText = temp.toFixed(1);
+          document.getElementById('hum-value').innerText = hum.toFixed(1);
+
+          // Aggiorna Barre Visuali (Range Temp: 20-35, Hum: 10-60)
+          updateBar('temp-bar', temp, 20, 35);
+          updateBar('hum-bar', hum, 10, 60);
+
+          // Aggiorna lo Storico per il Grafico
+          const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          chart.data.labels.push(now);
+          chart.data.datasets[0].data.push(temp);
+          chart.data.datasets[1].data.push(hum);
+
+          // Mantieni solo gli ultimi N punti
+          if (chart.data.labels.length > maxDataPoints) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+            chart.data.datasets[1].data.shift();
+          }
+
+          chart.update('none'); // Aggiorna grafico senza transizioni pesanti
+          setOnlineStatus(true);
+        } else {
+          setOnlineStatus(false);
+        }
+      } catch (error) {
+        setOnlineStatus(false);
+      }
+    }
+
+    // Funzione di Polling dello Stato della Pompa
+    async function updatePumpStatus() {
+      try {
+        const response = await fetch(PUMP_STATUS_URL, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${PUMP_TOKEN}`
+          }
+        });
+
+        if (response.ok) {
+          const isRunning = await response.json();
+          const pumpVal = document.getElementById('pump-value');
+          const pumpCard = document.getElementById('pump-card');
+          const pumpBadge = document.getElementById('pump-status-badge');
+          const btnPump = document.getElementById('btn-pump');
+
+          if (isRunning) {
+            pumpVal.innerText = "ATTIVA";
+            pumpCard.classList.add('active');
+            btnPump.classList.add('active');
+            btnPump.innerText = "Irrigazione Attiva...";
+            pumpBadge.innerText = "Collegata (Attiva)";
+            pumpBadge.style.color = "var(--cyan)";
+
+            if (lastPumpStatus !== true) {
+              addLog("Attuatore Pompa -> Rilevato stato ATTIVO (Irrigazione in corso)", "success");
+              lastPumpStatus = true;
+            }
+          } else {
+            pumpVal.innerText = "SPENTA";
+            pumpCard.classList.remove('active');
+            btnPump.classList.remove('active');
+            btnPump.innerText = "Avvia Irrigazione";
+            pumpBadge.innerText = "Collegata (Spenta)";
+            pumpBadge.style.color = "var(--text-muted)";
+
+            if (lastPumpStatus !== false && lastPumpStatus !== null) {
+              addLog("Attuatore Pompa -> Rilevato stato SPENTO (Irrigazione conclusa)", "info");
+            }
+            lastPumpStatus = false;
+          }
+          btnPump.disabled = false;
+        } else {
+          setPumpDisconnected();
+        }
+      } catch (err) {
+        setPumpDisconnected();
+      }
+    }
+
+    function setPumpDisconnected() {
+      const pumpVal = document.getElementById('pump-value');
+      const pumpCard = document.getElementById('pump-card');
+      const pumpBadge = document.getElementById('pump-status-badge');
+      const btnPump = document.getElementById('btn-pump');
+
+      pumpVal.innerText = "N.D.";
+      pumpCard.classList.remove('active');
+      btnPump.classList.remove('active');
+      btnPump.innerText = "Non Disponibile";
+      btnPump.disabled = true;
+      pumpBadge.innerText = "Disconnessa (Offline)";
+      pumpBadge.style.color = "var(--danger)";
+
+      if (lastPumpStatus !== 'disconnected') {
+        addLog("Errore: Impossibile raggiungere l'attuatore della pompa sulla porta 8082.", "error");
+        lastPumpStatus = 'disconnected';
+      }
+    }
+
+    // Azione di Attivazione della Pompa
+    async function triggerPump() {
+      const durationSelect = document.getElementById('pump-duration');
+      const btnPump = document.getElementById('btn-pump');
+      const duration = Number(durationSelect.value);
+
+      btnPump.disabled = true;
+      btnPump.innerText = "Invio...";
+
+      try {
+        addLog(`Richiesta avvio irrigazione per ${duration} secondi...`, "info");
+        const response = await fetch(PUMP_ACTION_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${PUMP_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(duration)
+        });
+
+        if (response.status === 204 || response.ok) {
+          addLog(`Azione inviata con successo! Pompa attivata per ${duration}s.`, "success");
+          await updatePumpStatus();
+        } else {
+          const text = await response.text();
+          addLog(`Errore avvio pompa (HTTP ${response.status}): ${text || 'Non autorizzato'}`, "error");
+          btnPump.disabled = false;
+          btnPump.innerText = "Avvia Irrigazione";
+        }
+      } catch (err) {
+        addLog(`Errore di connessione durante l'invio dell'azione: ${err.message}`, "error");
+        btnPump.disabled = false;
+        btnPump.innerText = "Avvia Irrigazione";
+      }
+    }
+
+    // Flusso principale
+    addLog("Dashboard inizializzata. Avvio connessione ai nodi WoT...", "info");
+    fetchThingDescription();
+    updateDashboardData();
+    updatePumpStatus();
+
+    // Polling periodico
+    setInterval(updateDashboardData, SENSOR_POLLING_INTERVAL);
+    setInterval(updatePumpStatus, PUMP_POLLING_INTERVAL);
+  </script>
+</body>
+
+</html>

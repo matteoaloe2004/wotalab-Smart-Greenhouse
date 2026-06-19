@@ -1,0 +1,76 @@
+{
+  "@context": [
+    "https://www.w3.org/2019/wot/td/v1",
+    {
+      "sosa": "http://www.w3.org/ns/sosa/",
+      "qudt": "http://qudt.org/schema/qudt/",
+      "unit": "http://qudt.org/vocab/unit/"
+    }
+  ],
+  "id": "urn:dev:wot:greenhouse-environmental-sensor-01",
+  "title": "Greenhouse Environmental Sensor",
+  "@type": "sosa:Sensor",
+  "description": "An environmental sensor node monitoring temperature and soil humidity in a smart greenhouse.",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": [
+    "nosec_sc"
+  ],
+  "properties": {
+    "temperature": {
+      "type": "number",
+      "title": "Ambient Temperature",
+      "description": "The measured ambient temperature inside the greenhouse.",
+      "qudt:unit": "unit:DEG_C",
+      "minimum": 20.0,
+      "maximum": 35.0,
+      "readOnly": true
+    },
+    "humidity": {
+      "type": "number",
+      "title": "Soil Humidity",
+      "description": "The measured moisture content of the soil.",
+      "qudt:unit": "unit:PERCENT",
+      "minimum": 10.0,
+      "maximum": 60.0,
+      "readOnly": true
+    }
+  },
+  "events": {
+    "environmentalData": {
+      "description": "Periodically emitted event containing temperature and soil humidity observations.",
+      "data": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": "number",
+            "title": "Ambient Temperature",
+            "description": "The measured ambient temperature inside the greenhouse.",
+            "qudt:unit": "unit:DEG_C",
+            "minimum": 20.0,
+            "maximum": 35.0
+          },
+          "humidity": {
+            "type": "number",
+            "title": "Soil Humidity",
+            "description": "The measured moisture content of the soil.",
+            "qudt:unit": "unit:PERCENT",
+            "minimum": 10.0,
+            "maximum": 60.0
+          }
+        },
+        "required": ["temperature", "humidity"]
+      },
+      "forms": [
+        {
+          "href": "mqtt://localhost:1883/greenhouse/sensors/environmental/data",
+          "op": ["subscribeevent"],
+          "contentType": "application/json"
+        }
+      ]
+    }
+  }
+}
