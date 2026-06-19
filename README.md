@@ -1,11 +1,15 @@
-# Smart Greenhouse: Sistema di Monitoraggio ed Irrigazione Intelligente 
+# Smart Greenhouse: Sistema di Monitoraggio ed Irrigazione Intelligente
 
+[![Progetto](https://img.shields.io/badge/Progetto-APPROVATO-success?style=flat-square)](#)
+[![WoT](https://img.shields.io/badge/W3C-Web_of_Things-blue?style=flat-square)](#)
+[![Docker](https://img.shields.io/badge/Deployment-Docker_Compose-blueviolet?style=flat-square)](#)
+[![MQTT](https://img.shields.io/badge/Protocol-MQTT%20%7C%20HTTP-orange?style=flat-square)](#)
 
 ## Partecipanti
-Gruppo: C
+**Gruppo**: C
 
-Matteo Aloè - [EMAIL_ADDRESS]
-Elia Strazzella - [EMAIL_ADDRESS]
+* **Matteo Aloè** - [matteo.aloe3@studio.unibo.it](mailto:matteo.aloe3@studio.unibo.it)
+* **Elia Strazzella** - [Elia.strazzella@studio.unibo.it](mailto:Elia.strazzella@studio.unibo.it)
 
 ---
 
