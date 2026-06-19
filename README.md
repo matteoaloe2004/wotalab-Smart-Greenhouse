@@ -1,6 +1,6 @@
 # Smart Greenhouse: Sistema di Monitoraggio ed Irrigazione Intelligente
 
-[![Progetto](https://img.shields.io/badge/Progetto-APPROVATO-success?style=flat-square)](#)
+[![Progetto](https://img.shields.io/badge/Progetto-Append-success?style=flat-square)](#)
 [![WoT](https://img.shields.io/badge/W3C-Web_of_Things-blue?style=flat-square)](#)
 [![Docker](https://img.shields.io/badge/Deployment-Docker_Compose-blueviolet?style=flat-square)](#)
 [![MQTT](https://img.shields.io/badge/Protocol-MQTT%20%7C%20HTTP-orange?style=flat-square)](#)
