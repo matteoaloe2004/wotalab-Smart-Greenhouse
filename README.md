@@ -1,10 +1,11 @@
-# Progetto (✅ APPROVATO)
+# Progetto
 Gestione intelligente di una serra tramite Web of Things
 
 ## Partecipanti
 Gruppo: C
 
-Matteo Aloè - matteo.aloe2@studio.unibo.it
+Matteo Aloè - matteo.aloe3@studio.unibo.it
+Elia Strazzella - Elia.strazzella@studio.unibo.it
 
 ---
 
