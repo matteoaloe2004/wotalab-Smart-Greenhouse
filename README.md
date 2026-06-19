@@ -1,11 +1,11 @@
-# Progetto
-Gestione intelligente di una serra tramite Web of Things
+# Smart Greenhouse: Sistema di Monitoraggio ed Irrigazione Intelligente 
+
 
 ## Partecipanti
 Gruppo: C
 
-Matteo Aloè - matteo.aloe3@studio.unibo.it
-Elia Strazzella - Elia.strazzella@studio.unibo.it
+Matteo Aloè - [EMAIL_ADDRESS]
+Elia Strazzella - [EMAIL_ADDRESS]
 
 ---
 
