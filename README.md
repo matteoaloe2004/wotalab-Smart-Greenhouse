@@ -1,35 +1,75 @@
-# Smart Greenhouse: Sistema di Monitoraggio ed Irrigazione Intelligente conforme al W3C Web of Things (WoT)
+# Progetto (✅ APPROVATO)
+Gestione intelligente di una serra tramite Web of Things
 
-Questo documento descrive l'architettura, le scelte tecnologiche e i dettagli implementativi del progetto **Smart Greenhouse**, evidenziando le differenze chiave e le migliorie avanzate introdotte rispetto ad approcci didattici standard (come l'architettura basata su Express/WebSocket dei colleghi).
+## Partecipanti
+Gruppo: C
 
----
-
-## 1. Tabella Comparativa delle Architetture
-
-Per comprendere il valore ingegneristico di questa implementazione, la tabella seguente confronta le soluzioni tipiche (didattiche/semplificate) con il design adottato in questo progetto:
-
-| Funzionalità / Componente | Approccio Standard (Colleghi) | Nostra Soluzione (Smart Greenhouse) | Vantaggio Ingegneristico |
-| :--- | :--- | :--- | :--- |
-| **Architettura di Rete** | Singolo server monolitico (Express + WebSocket + API). | **Architettura a Microservizi Distribuita** con 4 componenti separati e isolati. | Simula fedelmente dispositivi fisici indipendenti connessi in rete locale. |
-| **Protocolli WoT Utilizzati** | Solo HTTP (Binding singolo). | **Sintesi Ibrida Multibinding (MQTT + HTTP)**. | Dimostra l'interoperabilità multiprotocollo nativa dello standard W3C WoT. |
-| **Trasmissione Telemetria** | Polling HTTP continuo o WebSocket custom. | **Pattern Pub/Sub su MQTT** (broker-based). | Ottimizzato per dispositivi IoT reali (ridotto consumo energetico e di banda). |
-| **Sicurezza degli Accessi** | Nessuna sicurezza definita nelle TD. | **Bearer Token Security** (API Key) formale. | Protegge gli attuatori da attivazioni non autorizzate in ambienti industriali. |
-| **Logica di Controllo** | Soglia fissa on/off (es. irriga sempre per 30s). | **Controllo Chiuso Proporzionale** (durata dinamica in base al deficit di umidità). | Ottimizzazione del consumo idrico e prevenzione dello stress idrico delle piante. |
-| **Orchestrator / Gateway** | Codice Express custom non conforme a WoT. | **WoT Consumer Gateway puro** via `@node-wot/core`. | Rispetto rigoroso degli standard; le Thing Descriptions vengono consumate a runtime. |
-| **Deployment** | Esecuzione manuale da terminali multipli. | **Docker Compose Multi-Container** (MQTT Broker + App). | Installazione con un solo comando, portabilità totale ed isolamento di rete. |
-| **Interfaccia Utente** | Dashboard HTML base. | **Glassmorphic UI Premium** con terminale macOS integrato e parser di sintassi TD. | UX eccezionale e visualizzazione immediata della conformità semantica delle Thing. |
+Matteo Aloè - matteo.aloe2@studio.unibo.it
 
 ---
 
-## 2. Architettura del Sistema
+## Idea generale del progetto
+Il progetto ha come obiettivo la realizzazione di un sistema Web of Things (WoT) per il monitoraggio e la gestione intelligente di una serra agricola (Smart Greenhouse), con particolare attenzione al benessere termico e idrico delle coltivazioni e all'ottimizzazione dell'irrigazione per prevenire sprechi d'acqua.
 
-Il sistema si compone di quattro entità logiche distinte che comunicano tramite standard WoT, distribuite su container Docker:
+L’idea è modellare i componenti della serra come Thing WoT, descritte tramite modelli semantici standardizzati, che permettano di osservare lo stato dell’ambiente in tempo reale e di attuare azioni correttive automatiche in base a regole dinamiche e proporzionali.
+
+---
+
+## Contesto e scenario
+Il sistema rappresenta una serra dotata di sensori per il monitoraggio ambientale e di un attuatore (pompa dell'acqua), in grado di reagire a variazioni di:
+* **temperatura dell'aria**
+* **umidità del suolo**
+
+Queste informazioni vengono utilizzate dall'orchestratore per prendere decisioni automatiche sulla durata dell'irrigazione, simulando un sistema industriale agricolo moderno ad alta efficienza.
+
+---
+
+## Thing WoT previste
+Il progetto prevede la creazione delle seguenti Thing:
+
+### 1. Sensore Ambientale (Environmental Sensor)
+Rappresenta le condizioni climatiche e di salute del suolo all'interno della serra, esponendo le proprietà di:
+* **Temperatura dell'aria** (in °C)
+* **Umidità del suolo** (in % di umidità relativa)
+
+### 2. Pompa di Irrigazione (Irrigation Pump Actuator)
+Rappresenta l'attuatore fisico incaricato di distribuire l'acqua alle piante. Consente di:
+* Monitorare lo stato di attività della pompa (**SPENTA / ATTIVA**).
+* Invocare l'azione di accensione della pompa con una durata specificata.
+* **Sicurezza attiva**: Trattandosi di un attuatore critico, l'accesso alle sue funzionalità è protetto tramite **Bearer Token (API Key)**.
+
+---
+
+## Relazioni e logica di funzionamento
+Le Thing sono collegate e coordinate da un Gateway centrale che implementa una logica di controllo a ciclo chiuso proporzionale:
+
+### Soglia Critica e Controllo Proporzionale
+Quando l'umidità del suolo scende sotto il livello limite del **30%**, l'orchestratore decide di attivare l'irrigazione. Per ottimizzare l'uso dell'acqua, la durata del ciclo di irrigazione è calcolata in modo dinamico e proporzionale in base al deficit di umidità rilevato:
+* **Umidità tra 25% e 29.9%**: Irrigazione leggera (**5 secondi**) per ripristinare piccoli scostamenti.
+* **Umidità tra 20% e 24.9%**: Irrigazione media (**10 secondi**).
+* **Umidità tra 15% e 19.9%**: Irrigazione profonda (**20 secondi**).
+* **Umidità inferiore a 15%**: Stato critico di siccità, irrigazione intensa (**30 secondi**).
+
+### Sicurezza e Autorizzazione dell'Azione
+Per evitare attivazioni accidentali o attacchi maliziosi, l'azione `turnOnPump` dell'attuatore risponde con un codice HTTP `401 Unauthorized` se non viene trasmesso nell'header HTTP la chiave di sicurezza autorizzata (`Authorization: Bearer chiave-segreta-pompa`).
+
+---
+
+## Flusso di Esecuzione e Architettura del Sistema
+Il sistema implementa lo standard W3C Web of Things (WoT) per far comunicare i dispositivi IoT usando sia il protocollo HTTP (per letture di proprietà e azioni) sia il protocollo MQTT (per la telemetria periodica). Ogni sensore e attuatore è interamente descritto da una **Thing Description (TD) in JSON-LD**, che specifica capacità, endpoint e requisiti di sicurezza.
+
+L'infrastruttura si basa sul concetto di **Servient**, un runtime WoT a doppia responsabilità (Producer e Consumer):
+* **Environmental Sensor (Producer)**: Espone i dati in tempo reale su server HTTP (porta 8080) e pubblica in modalità Pub/Sub la telemetria sul broker MQTT ogni 10 secondi.
+* **Irrigation Pump (Producer)**: Espone lo stato e l'azione tramite un server HTTP protetto sulla porta 8082.
+* **Gateway Orchestrator (Consumer)**: Il "cervello" della serra. Si sottoscrive al broker MQTT del sensore, riceve i dati, applica la logica proporzionale ed invia le richieste HTTP POST di irrigazione all'attuatore autenticandosi col token.
+
+Ecco l'architettura completa delle interazioni:
 
 ```mermaid
 graph TD
     %% Nodi Principali
     subgraph Host Browser
-        DB[Dashboard Web - Port 8081]
+        DB[Dashboard Web & Console - Port 8081]
     end
 
     subgraph Docker Containers
@@ -56,78 +96,48 @@ graph TD
     DB -- C. Azione manuale HTTP POST con Token --> Pump
 ```
 
-### Componenti di Rete e Porte Dedicate
-1. **MQTT Broker (`greenhouse-mqtt-broker`)** [Porta `1883`]: Broker Eclipse Mosquitto che fa da collettore dei dati inviati dai sensori.
-2. **Sensor Thing (HTTP/MQTT)** [Porta `8080`]: Espone le proprietà di temperatura e umidità via HTTP ed emette periodicamente eventi di telemetria sul broker MQTT.
-3. **Pump Actuator Thing (HTTP con Sicurezza)** [Porta `8082`]: Espone lo stato della pompa (`pumpStatus`) e l'azione (`turnOnPump`). È protetto da autenticazione Bearer Token.
-4. **Gateway Orchestrator (WoT Consumer)**: Consuma le Thing Description del sensore e della pompa. Ascolta i dati dei sensori via MQTT ed esegue la logica proporzionale azionando la pompa via HTTP.
-5. **Dashboard Web** [Porta `8081`]: Interfaccia grafica che interroga periodicamente gli endpoint HTTP esposti dai nodi WoT per aggiornare grafici, log storici e la visualizzazione del codice JSON-LD delle TD.
+---
+
+## L'Ontologia Semantica
+L'architettura del sistema affianca al livello operativo un livello semantico mappando le definizioni all'interno delle Thing Descriptions (.td.json) su standard del W3C/ETSI:
+* **SOSA (Sensor, Observation, Sample, and Actuator)**: usato per dichiarare a un livello astratto se un nodo sta compiendo osservazioni sull'ambiente (`sosa:ObservableProperty` per temperatura e umidità) o ne sta alterando lo stato (`sosa:Actuator` per la pompa).
+
+L'esposizione semantica permette una totale **Interoperabilità Esterna (Dynamic Discovery)**. Un hub domotico o industriale universale di terze parti, leggendo le Thing Descriptions, comprenderebbe immediatamente il ruolo e i canali di comunicazione di ogni dispositivo grazie ai tag standard SOSA, integrandoli nel proprio ecosistema in modo del tutto agnostico.
 
 ---
 
-## 3. Dettagli Implementativi Unici
-
-### A. Sintesi Multibinding (MQTT + HTTP)
-A differenza di soluzioni monolitiche, il nostro **Gateway** inizializza un runtime WoT con due client factory diversi:
-```typescript
-import { Servient } from "@node-wot/core";
-import { HttpClientFactory } from "@node-wot/binding-http";
-import { MqttClientFactory } from "@node-wot/binding-mqtt";
-
-const servient = new Servient();
-servient.addClientFactory(new HttpClientFactory());
-servient.addClientFactory(new MqttClientFactory());
-const WoT = await servient.start();
-```
-Questo permette di orchestrare dispositivi fisici che parlano protocolli diversi in modo trasparente.
-
-### B. Gestione della Sicurezza formale (W3C TD)
-La Thing Description della pompa dichiara esplicitamente la sicurezza di tipo `bearer`:
-```json
-"securityDefinitions": {
-  "api_key": {
-    "scheme": "bearer",
-    "in": "header",
-    "name": "Authorization"
-  }
-}
-```
-L'attuatore verifica il token ad ogni chiamata. L'Orchestratore e la Dashboard iniettano le credenziali corrette a livello di binding HTTP WoT.
-
-### C. Logica di Irrigazione Proporzionale
-La durata dell'irrigazione non è statica, ma calcola la gravità del deficit idrico del suolo:
-```typescript
-let duration = 10;
-if (humidity >= 25) {
-  duration = 5;      // Umidità vicina alla soglia -> Irrigazione leggera (5s)
-} else if (humidity >= 20) {
-  duration = 10;     // Umidità moderata -> Irrigazione media (10s)
-} else if (humidity >= 15) {
-  duration = 20;     // Umidità bassa -> Irrigazione profonda (20s)
-} else {
-  duration = 30;     // Stato critico -> Irrigazione intensa (30s)
-}
-await pumpThing.invokeAction("turnOnPump", duration);
-```
-
-### D. Interfaccia Grafica di Monitoraggio (Web)
-La dashboard include:
-* **Trend Storici**: Un grafico Chart.js a doppia scala (Temperatura / Umidità) con sfumature di colore neon.
-* **Tabelle FIFO "Ultime 5 letture"**: Per ciascun sensore, mostra i 5 dati più recenti completi di timestamp preciso in tempo reale.
-* **Visualizzatore TD con Syntax Highlighting**: Evidenziazione sintattica dinamica dei tag JSON-LD e pulsante rapido per copiare la Thing Description.
+## Stack Tecnologico
+| Livello | Tecnologie |
+| :--- | :--- |
+| **Backend / WoT Runtime** | Node.js, TypeScript, `@node-wot/core`, `@node-wot/binding-http`, `@node-wot/binding-mqtt` |
+| **Frontend / Dashboard** | HTML5, CSS3 Vanilla (design moderno glassmorphic), JavaScript ES6, Chart.js |
+| **Broker Messaggi** | Eclipse Mosquitto (MQTT) |
+| **Containerizzazione** | Docker, Docker Compose |
 
 ---
 
-## 4. Istruzioni per l'Avvio in Docker
+## Interfaccia Utente (Dashboard)
+Il sistema integra una piattaforma web (attiva sulla porta 8081) che offre un punto di controllo centralizzato per l'intero ambiente. La dashboard consente all'utente di:
+* **Monitorare in tempo reale** lo stato dei sensori e della pompa.
+* **Visualizzare lo storico FIFO** delle ultime 5 letture ricevute.
+* **Eseguire l'override manuale** per forzare l'irrigazione selezionando la durata.
+* **Console Interattive dei Singoli Endpoint**: Cliccando sulle card si accede a pagine dedicate per ciascuna proprietà:
+  * **/temperature e /humidity**: mostrano un grafico live Chart.js delle letture e i dettagli del relativo endpoint WoT.
+  * **/pump**: una console di controllo protetta. Richiede all'utente di inserire il Bearer Token (`chiave-segreta-pompa`). Se il token è valido, si sblocca il controllo manuale con un log di audit locale delle ultime attivazioni effettuate.
 
-Il progetto è configurato per l'esecuzione immediata tramite Docker Compose:
+---
 
-1. **Compilazione ed Avvio**:
+## Come avviare il progetto
+L'intero sistema è containerizzato per consentire una portabilità totale ed un avvio istantaneo.
+
+### Requisiti
+* Docker e Docker Compose installati sul computer.
+
+### Procedura di avvio
+1. Posizionarsi nella directory principale del progetto (dove è presente il file `docker-compose.yml`) e lanciare la compilazione e l'avvio dei container:
    ```bash
-   docker-compose build
-   docker-compose up
+   docker-compose up --build
    ```
-2. **Accesso alla Dashboard**:
-   Aprire nel browser: `http://localhost:8081/`
-3. **Modifica Frequenza di Campionamento**:
-   Nel file `docker-compose.yml`, modificare il valore `TELEMETRY_INTERVAL` (in millisecondi) per cambiare la cadenza di invio dei sensori (es. `10000` per 10 secondi).
+2. Ad avvio completato, aprire il browser e visitare l'indirizzo:
+   `http://localhost:8081/`
+3. Per testare la console protetta della pompa di irrigazione, cliccare sulla card della pompa ed inserire il token di sicurezza: `chiave-segreta-pompa`.
