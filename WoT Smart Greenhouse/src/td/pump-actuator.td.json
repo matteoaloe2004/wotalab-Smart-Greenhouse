@@ -6,9 +6,9 @@
     }
   ],
   "id": "urn:dev:wot:greenhouse-irrigation-pump-01",
-  "title": "Greenhouse Irrigation Pump",
+  "title": "Pompa Irrigazione Serra",
   "@type": "sosa:Actuator",
-  "description": "An HTTP-controlled irrigation pump actuator inside a smart greenhouse.",
+  "description": "Un attuatore per la pompa di irrigazione controllato via HTTP all'interno di una serra intelligente.",
   "securityDefinitions": {
     "api_key_sc": {
       "scheme": "bearer"
@@ -20,20 +20,20 @@
   "properties": {
     "pumpStatus": {
       "type": "boolean",
-      "title": "Pump Status",
-      "description": "True if the pump is currently running, false otherwise.",
+      "title": "Stato della Pompa",
+      "description": "Vero se la pompa è attualmente in funzione, falso altrimenti.",
       "readOnly": true
     }
   },
   "actions": {
     "turnOnPump": {
-      "title": "Turn On Pump",
-      "description": "Triggers the irrigation pump for a specified duration in seconds.",
+      "title": "Avvia Pompa",
+      "description": "Attiva la pompa di irrigazione per una durata specificata in secondi.",
       "input": {
         "type": "integer",
         "minimum": 1,
         "maximum": 300,
-        "description": "Duration in seconds to run the pump."
+        "description": "Durata in secondi di funzionamento della pompa."
       }
     }
   }

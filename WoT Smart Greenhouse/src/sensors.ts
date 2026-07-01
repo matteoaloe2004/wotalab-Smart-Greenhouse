@@ -26,16 +26,29 @@ servient.start().then(async (WoT) => {
   environmentalSensorTd.events.environmentalData.forms[0].href = `${MQTT_BROKER}${topicPath}`;
 
   try {
-    // Variabili per mantenere i dati dei sensori
+    // Variabili per mantenere i dati dei sensori e la configurazione della serra
     let latestTemperature = 22.5;
     let latestHumidity = 45.0;
+    let activeGreenhouse = "tropical";
 
     // Produce il Thing del sensore
     const exposedThing = await WoT.produce(environmentalSensorTd);
-    
-    // Gestori di lettura per temperatura e umidità
+
+    // Gestori di lettura per le proprietà
     exposedThing.setPropertyReadHandler("temperature", async () => latestTemperature);
     exposedThing.setPropertyReadHandler("humidity", async () => latestHumidity);
+    exposedThing.setPropertyReadHandler("activeGreenhouse", async () => activeGreenhouse);
+
+    // Gestore di scrittura per cambiare tipo di serra
+    exposedThing.setPropertyWriteHandler("activeGreenhouse", async (val) => {
+      const newVal = await val.value() as string;
+      if (newVal === "tropical" || newVal === "desert") {
+        activeGreenhouse = newVal;
+        console.log(`[SENSORE] Tipo di serra modificato a: ${activeGreenhouse.toUpperCase()}`);
+        return undefined;
+      }
+      throw new Error("Tipo di serra non supportato.");
+    });
 
     // Espone il Thing in rete
     await exposedThing.expose();
@@ -74,20 +87,27 @@ servient.start().then(async (WoT) => {
       console.log("[SENSORE] Dashboard Web attiva a: http://localhost:8081/");
     });
 
-    // Loop periodico per la generazione e pubblicazione dei dati simulati
-    const TELEMETRY_INTERVAL = Number(process.env.TELEMETRY_INTERVAL) || 10000;
-    
+    // Loop periodico per la generazione e pubblicazione dei dati simulati (default: 15 secondi)
+    const TELEMETRY_INTERVAL = Number(process.env.TELEMETRY_INTERVAL) || 15000;
+
     setInterval(async () => {
-      // Simulazione di valori realistici per una serra
-      latestTemperature = parseFloat((Math.random() * 15 + 20).toFixed(2)); // Tra 20°C e 35°C
-      latestHumidity = parseFloat((Math.random() * 50 + 10).toFixed(2));    // Tra 10% e 60%
+      // Generazione dati in base alla serra attiva
+      if (activeGreenhouse === "tropical") {
+        // Serra Tropicale: più umida e con temperature moderate
+        latestTemperature = parseFloat((Math.random() * 8 + 24).toFixed(2)); // Tra 24°C e 32°C
+        latestHumidity = parseFloat((Math.random() * 25 + 25).toFixed(2));    // Tra 25% e 50%
+      } else {
+        // Serra Desertica: molto calda e arida
+        latestTemperature = parseFloat((Math.random() * 10 + 28).toFixed(2)); // Tra 28°C e 38°C
+        latestHumidity = parseFloat((Math.random() * 20 + 12).toFixed(2));    // Tra 12% e 32%
+      }
 
       const payload = {
         temperature: latestTemperature,
         humidity: latestHumidity
       };
 
-      console.log(`[SENSORE] Rilevamento -> Temp: ${payload.temperature}°C, Umidità: ${payload.humidity}%`);
+      console.log(`[SENSORE] Rilevamento (${activeGreenhouse.toUpperCase()}) -> Temp: ${payload.temperature}°C, Umidità: ${payload.humidity}%`);
 
       try {
         // Pubblica i dati su MQTT tramite l'evento

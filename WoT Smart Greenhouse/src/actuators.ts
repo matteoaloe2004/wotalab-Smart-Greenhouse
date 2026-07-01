@@ -65,10 +65,10 @@ servient.start().then(async (WoT) => {
 
       console.log(`[ATTUATORE] Ricevuto comando: avvio pompa per ${duration} secondi.`);
 
-      // Se la pompa è già attiva, reimposta il timer per estendere la durata
-      if (pumpRunning && pumpTimeout) {
-        clearTimeout(pumpTimeout);
-        console.log("[ATTUATORE] Pompa già attiva. Timer reimpostato.");
+      // Se la pompa è già attiva, rifiuta il comando per evitare attivazioni concorrenti
+      if (pumpRunning) {
+        console.log("[ATTUATORE] Rifiutato comando avvio: la pompa è già attiva.");
+        throw new Error("La pompa è già attiva.");
       }
 
       pumpRunning = true;

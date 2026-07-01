@@ -43,46 +43,71 @@ servient.start().then(async (WoT) => {
 
         console.log(`[ORCHESTRATORE] Ricevuto -> Temp: ${temperature}°C, Umidità: ${humidity}%`);
 
-        // Logica di controllo dell'irrigazione (soglia umidità < 30%)
-        if (humidity < 30) {
+        // Legge dinamicamente il tipo di serra attivo dal sensore
+        const activeGreenhouseOutput = await sensorThing.readProperty("activeGreenhouse");
+        const activeGreenhouse = (await activeGreenhouseOutput.value()) as string;
+
+        // Imposta la soglia di umidità in base alla serra attiva (Tropicale: 40%, Desertica: 20%)
+        const threshold = activeGreenhouse === "tropical" ? 40 : 20;
+        console.log(`[ORCHESTRATORE] Ricevuto -> Temp: ${temperature}°C, Umidità: ${humidity}% | Serra: ${activeGreenhouse.toUpperCase()} (Soglia: ${threshold}%)`);
+
+        // Logica di controllo dell'irrigazione
+        if (humidity < threshold) {
           if (isPumpRunning) {
-            console.log(`[ORCHESTRATORE] Umidità bassa (${humidity}%), ma l'irrigazione è già in corso.`);
+            console.log(`[ORCHESTRATORE] Umidità sotto soglia (${humidity}%), ma la pompa è già in funzione.`);
             return;
           }
 
-          // Calcola la durata dell'irrigazione in base alla gravità della siccità
+          // Calcola la durata dell'irrigazione in base alla gravità della siccità e al tipo di serra
           let duration = 10;
-          let level = "normale";
+          let level = "medio";
 
-          if (humidity >= 25) {
-            duration = 5;
-            level = "basso";
-          } else if (humidity >= 20) {
-            duration = 10;
-            level = "medio";
-          } else if (humidity >= 15) {
-            duration = 20;
-            level = "alto";
+          if (activeGreenhouse === "tropical") {
+            if (humidity >= 35) {
+              duration = 5;
+              level = "basso";
+            } else if (humidity >= 30) {
+              duration = 10;
+              level = "medio";
+            } else if (humidity >= 25) {
+              duration = 20;
+              level = "alto";
+            } else {
+              duration = 30;
+              level = "critico";
+            }
           } else {
-            duration = 30;
-            level = "critico";
+            // Desertica
+            if (humidity >= 17) {
+              duration = 5;
+              level = "basso";
+            } else if (humidity >= 14) {
+              duration = 10;
+              level = "medio";
+            } else if (humidity >= 11) {
+              duration = 20;
+              level = "alto";
+            } else {
+              duration = 30;
+              level = "critico";
+            }
           }
 
-          console.log(`[ORCHESTRATORE] Avvio irrigazione (livello: ${level}, durata: ${duration}s)`);
+          console.log(`[ORCHESTRATORE] Avvio irrigazione automatica (livello: ${level}, durata: ${duration}s)`);
           isPumpRunning = true;
 
           // Attiva la pompa tramite HTTP POST
           await pumpThing.invokeAction("turnOnPump", duration);
-          console.log("[ORCHESTRATORE] Comando turnOnPump inviato.");
+          console.log("[ORCHESTRATORE] Comando turnOnPump inviato all'attuatore.");
 
           // Sblocca la pompa al termine dell'irrigazione
           setTimeout(() => {
             isPumpRunning = false;
-            console.log("[ORCHESTRATORE] Irrigazione terminata, logica sbloccata.");
+            console.log("[ORCHESTRATORE] Irrigazione conclusa, logica sbloccata.");
           }, duration * 1000);
 
         } else {
-          console.log(`[ORCHESTRATORE] Stato OK, umidità sufficiente.`);
+          console.log(`[ORCHESTRATORE] Stato OK, umidità sufficiente per la serra corrente.`);
         }
       } catch (err: any) {
         console.error("[ORCHESTRATORE] Errore nell'elaborazione del dato ricevuto:", err.message);

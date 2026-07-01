@@ -8,9 +8,9 @@
     }
   ],
   "id": "urn:dev:wot:greenhouse-environmental-sensor-01",
-  "title": "Greenhouse Environmental Sensor",
+  "title": "Sensore Ambientale Serra",
   "@type": "sosa:Sensor",
-  "description": "An environmental sensor node monitoring temperature and soil humidity in a smart greenhouse.",
+  "description": "Un nodo sensore ambientale che monitora la temperatura e l'umidità del suolo all'interno di una serra intelligente.",
   "securityDefinitions": {
     "nosec_sc": {
       "scheme": "nosec"
@@ -22,8 +22,8 @@
   "properties": {
     "temperature": {
       "type": "number",
-      "title": "Ambient Temperature",
-      "description": "The measured ambient temperature inside the greenhouse.",
+      "title": "Temperatura Ambientale",
+      "description": "La temperatura ambientale misurata all'interno della serra.",
       "qudt:unit": "unit:DEG_C",
       "minimum": 20.0,
       "maximum": 35.0,
@@ -31,32 +31,39 @@
     },
     "humidity": {
       "type": "number",
-      "title": "Soil Humidity",
-      "description": "The measured moisture content of the soil.",
+      "title": "Umidità del Suolo",
+      "description": "Il contenuto di umidità misurato nel suolo.",
       "qudt:unit": "unit:PERCENT",
       "minimum": 10.0,
       "maximum": 60.0,
       "readOnly": true
+    },
+    "activeGreenhouse": {
+      "type": "string",
+      "title": "Tipo di Serra Attivo",
+      "description": "Il tipo di serra attivo che determina i parametri di automazione (es. 'tropical' o 'desert').",
+      "enum": ["tropical", "desert"],
+      "readOnly": false
     }
   },
   "events": {
     "environmentalData": {
-      "description": "Periodically emitted event containing temperature and soil humidity observations.",
+      "description": "Evento emesso periodicamente contenente le osservazioni di temperatura e umidità del suolo.",
       "data": {
         "type": "object",
         "properties": {
           "temperature": {
             "type": "number",
-            "title": "Ambient Temperature",
-            "description": "The measured ambient temperature inside the greenhouse.",
+            "title": "Temperatura Ambientale",
+            "description": "La temperatura ambientale misurata all'interno della serra.",
             "qudt:unit": "unit:DEG_C",
             "minimum": 20.0,
             "maximum": 35.0
           },
           "humidity": {
             "type": "number",
-            "title": "Soil Humidity",
-            "description": "The measured moisture content of the soil.",
+            "title": "Umidità del Suolo",
+            "description": "Il contenuto di umidità misurato nel suolo.",
             "qudt:unit": "unit:PERCENT",
             "minimum": 10.0,
             "maximum": 60.0
