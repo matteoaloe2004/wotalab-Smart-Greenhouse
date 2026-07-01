@@ -16,8 +16,8 @@ COPY src ./src
 # Compila il codice TypeScript in JavaScript
 RUN npm run build
 
-# Copiamo manualmente tutti i file HTML della dashboard e delle sub-dashboard nella directory di produzione 'dist'.
-RUN mkdir -p dist/things/sensor-env && cp src/things/sensor-env/*.html dist/things/sensor-env/
+# Copia i file HTML della dashboard nella directory di produzione 'dist'.
+RUN mkdir -p dist/dashboard && cp src/dashboard/*.html dist/dashboard/
 
 # Rimuove le dipendenze di sviluppo (devDependencies) per ridurre la dimensione del container
 RUN npm prune --production

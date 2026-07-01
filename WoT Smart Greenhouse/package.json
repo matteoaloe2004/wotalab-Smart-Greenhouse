@@ -2,13 +2,14 @@
   "name": "wot-smart-greenhouse",
   "version": "1.0.0",
   "description": "IoT Smart Greenhouse based on W3C Web of Things (WoT) standard",
-  "main": "dist/things/sensor-env/index.js",
+  "main": "dist/launcher.js",
   "scripts": {
     "build": "tsc",
+    "postbuild": "node -e \"const fs = require('fs'); const path = require('path'); fs.mkdirSync('dist/dashboard', { recursive: true }); fs.readdirSync('src/dashboard').filter(f => f.endsWith('.html')).forEach(f => fs.copyFileSync(path.join('src/dashboard', f), path.join('dist/dashboard', f)))\"",
     "start": "ts-node src/launcher.ts",
-    "start:sensor": "ts-node src/things/sensor-env/index.ts",
-    "start:pump": "ts-node src/things/actuator-pump/index.ts",
-    "start:gateway": "ts-node src/gateway.ts",
+    "start:sensor": "ts-node src/sensors.ts",
+    "start:pump": "ts-node src/actuators.ts",
+    "start:gateway": "ts-node src/orchestrator.ts",
     "start:prod": "node dist/launcher.js"
   },
   "dependencies": {

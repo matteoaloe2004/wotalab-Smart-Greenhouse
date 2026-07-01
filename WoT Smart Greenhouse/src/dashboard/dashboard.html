@@ -681,7 +681,7 @@
     /* Muted */
 
     svg {
-      fill: none;
+      fill: fill: none;
       stroke: currentColor;
       stroke-width: 2.2;
       stroke-linecap: round;
@@ -1318,26 +1318,6 @@
         }
       } catch (err) {
         setPumpDisconnected();
-      }
-    }
-
-    function setPumpDisconnected() {
-      const pumpVal = document.getElementById('pump-value');
-      const pumpCard = document.getElementById('pump-card');
-      const pumpBadge = document.getElementById('pump-status-badge');
-      const btnPump = document.getElementById('btn-pump');
-
-      pumpVal.innerText = "N.D.";
-      pumpCard.classList.remove('active');
-      btnPump.classList.remove('active');
-      btnPump.innerText = "Non Disponibile";
-      btnPump.disabled = true;
-      pumpBadge.innerText = "Disconnessa (Offline)";
-      pumpBadge.style.color = "var(--danger)";
-
-      if (lastPumpStatus !== 'disconnected') {
-        addLog("Errore: Impossibile raggiungere l'attuatore della pompa sulla porta 8082.", "error");
-        lastPumpStatus = 'disconnected';
       }
     }
 

@@ -2,10 +2,7 @@ import { Servient } from "@node-wot/core";
 import { HttpClientFactory } from "@node-wot/binding-http";
 import { MqttClientFactory } from "@node-wot/binding-mqtt";
 
-/**
- * ============================================================================
- * PROGETTO ESAME: SERRA INTELLIGENTE WoT - GATEWAY / ORCHESTRATOR (CONSUMER)
- * ============================================================================
+/*
  * Questo script funge esclusivamente da WoT Consumer. I suoi compiti sono:
  * 1. Recuperare dinamicamente le Thing Descriptions (TD) dei dispositivi tramite HTTP.
  * 2. Collegarsi al broker MQTT per ascoltare gli eventi del sensore ambientale.
@@ -49,7 +46,7 @@ servient.start()
       // Questo approccio evita problemi legati a file statici obsoleti o privi dei campi 'forms' generati a runtime.
       console.log("[Gateway] Recupero della Thing Description del Sensore da http://localhost:8080/greenhouse-environmental-sensor ...");
       const sensorTd = await WoT.requestThingDescription("http://localhost:8080/greenhouse-environmental-sensor");
-      
+
       console.log("[Gateway] Recupero della Thing Description della Pompa da http://localhost:8082/greenhouse-irrigation-pump ...");
       const pumpTd = await WoT.requestThingDescription("http://localhost:8082/greenhouse-irrigation-pump");
 
