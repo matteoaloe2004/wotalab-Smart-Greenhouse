@@ -24,14 +24,14 @@ servient.start().then(async (WoT) => {
   try {
     // Richiesta delle Thing Description dinamiche dai produttori
     console.log("[ORCHESTRATORE] Caricamento TD sensore...");
-    const sensorTd = await WoT.requestThingDescription("http://localhost:8080/greenhouse-environmental-sensor");
-    
+    const sensorTd = await WoT.requestThingDescription("http://localhost:8080/sensore-ambientale-serra");
+
     console.log("[ORCHESTRATORE] Caricamento TD pompa...");
-    const pumpTd = await WoT.requestThingDescription("http://localhost:8082/greenhouse-irrigation-pump");
+    const pumpTd = await WoT.requestThingDescription("http://localhost:8082/pompa-irrigazione-serra");
 
     // Consuma le Thing
-    const sensorThing = await WoT.consume(sensorTd);
-    const pumpThing = await WoT.consume(pumpTd);
+    const sensorThing = await WoT.consume(typeof sensorTd === "string" ? JSON.parse(sensorTd) : sensorTd);
+    const pumpThing = await WoT.consume(typeof pumpTd === "string" ? JSON.parse(pumpTd) : pumpTd);
 
     console.log("[ORCHESTRATORE] Sottoscrizione eventi MQTT attiva.");
 
@@ -47,8 +47,8 @@ servient.start().then(async (WoT) => {
         const activeGreenhouseOutput = await sensorThing.readProperty("activeGreenhouse");
         const activeGreenhouse = (await activeGreenhouseOutput.value()) as string;
 
-        // Imposta la soglia di umidità in base alla serra attiva (Tropicale: 40%, Desertica: 20%)
-        const threshold = activeGreenhouse === "tropical" ? 40 : 20;
+        // Imposta la soglia di umidità in base alla serra attiva (Tropicale: 40%, Mediterranea: 30%)
+        const threshold = activeGreenhouse === "tropical" ? 40 : 30;
         console.log(`[ORCHESTRATORE] Ricevuto -> Temp: ${temperature}°C, Umidità: ${humidity}% | Serra: ${activeGreenhouse.toUpperCase()} (Soglia: ${threshold}%)`);
 
         // Logica di controllo dell'irrigazione
@@ -77,18 +77,18 @@ servient.start().then(async (WoT) => {
               level = "critico";
             }
           } else {
-            // Desertica
-            if (humidity >= 17) {
+            // Mediterranea
+            if (humidity >= 25) {
               duration = 5;
               level = "basso";
-            } else if (humidity >= 14) {
+            } else if (humidity >= 20) {
               duration = 10;
               level = "medio";
-            } else if (humidity >= 11) {
-              duration = 20;
+            } else if (humidity >= 15) {
+              duration = 15;
               level = "alto";
             } else {
-              duration = 30;
+              duration = 25;
               level = "critico";
             }
           }
@@ -115,7 +115,7 @@ servient.start().then(async (WoT) => {
     });
 
   } catch (err: any) {
-    console.error("[ORCHESTRATORE] Errore durante l'inizializzazione:", err.message);
+    console.error("[ORCHESTRATORE] Errore durante l'inizializzazione:", err);
   }
 }).catch((err) => {
   console.error("[ORCHESTRATORE] Impossibile avviare il runtime:", err);

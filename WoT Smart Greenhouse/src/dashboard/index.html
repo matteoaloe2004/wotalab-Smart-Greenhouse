@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WoT Smart Greenhouse - Prototipi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="landing-body">
+
+  <div class="container landing-container">
+    
+    <header class="landing-header">
+      <div class="header-title text-center">
+        <h1>WoT Smart Greenhouse</h1>
+        <p>Seleziona uno dei due prototipi di serra intelligente basati su standard W3C Web of Things</p>
+      </div>
+    </header>
+
+    <div class="prototype-grid">
+      
+      <!-- Card: Serra Mediterranea -->
+      <div class="card prototype-card mediterranean" onclick="location.href='/dashboard.html?type=mediterranean'">
+        <div class="prototype-image-placeholder mediterranean-bg">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+          </svg>
+        </div>
+        
+        <div class="card-header">
+          <span class="card-title">Prototipo 1</span>
+          <div class="status-badge-compact online">MEDITERRANEA</div>
+        </div>
+
+        <div class="prototype-details">
+          <h2>Serra Mediterranea</h2>
+          <p class="description">Progettata per coltivazioni tipiche del bacino del Mediterraneo come olivi, agrumi ed erbe aromatiche.</p>
+          
+          <div class="spec-list">
+            <div class="spec-item">
+              <span class="spec-label">Temperatura Aria</span>
+              <span class="spec-val">18°C - 26°C (Mite)</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Umidità Target</span>
+              <span class="spec-val">30% - 60% (Moderata)</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Soglia Automazione</span>
+              <span class="spec-val highlight-med">Irriga sotto il 30%</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-med" onclick="event.stopPropagation(); location.href='/dashboard.html?type=mediterranean'">Apri Dashboard ↗</button>
+      </div>
+
+      <!-- Card: Serra Tropicale -->
+      <div class="card prototype-card tropical" onclick="location.href='/dashboard.html?type=tropical'">
+        <div class="prototype-image-placeholder tropical-bg">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v12M6 12h12"></path>
+          </svg>
+        </div>
+
+        <div class="card-header">
+          <span class="card-title">Prototipo 2</span>
+          <div class="status-badge-compact online tropical-badge">TROPICALE</div>
+        </div>
+
+        <div class="prototype-details">
+          <h2>Serra Tropicale</h2>
+          <p class="description">Ottimizzata per specie esotiche, orchidee e piante della foresta pluviale che richiedono alte temperature.</p>
+          
+          <div class="spec-list">
+            <div class="spec-item">
+              <span class="spec-label">Temperatura Aria</span>
+              <span class="spec-val">24°C - 32°C (Caldo)</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Umidità Target</span>
+              <span class="spec-val">25% - 50% (Alta richiesta)</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Soglia Automazione</span>
+              <span class="spec-val highlight-trop">Irriga sotto il 40%</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-trop" onclick="event.stopPropagation(); location.href='/dashboard.html?type=tropical'">Apri Dashboard ↗</button>
+      </div>
+
+    </div>
+
+    <footer class="landing-footer text-center">
+      <p>Corso di Laboratorio di Piattaforme di Sviluppo per Automazione - Università di Bologna</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>

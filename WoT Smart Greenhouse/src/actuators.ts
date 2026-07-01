@@ -1,6 +1,6 @@
 import { Servient } from "@node-wot/core";
 import { HttpServer } from "@node-wot/binding-http";
-import * as td from "./td/pump-actuator.td.json";
+import td from "./td/pump-actuator.td.json";
 
 // Inizializza il Servient WoT per l'attuatore della pompa
 const servient = new Servient();

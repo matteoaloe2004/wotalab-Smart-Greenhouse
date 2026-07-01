@@ -1,7 +1,7 @@
 import { Servient } from "@node-wot/core";
 import { MqttClientFactory, MqttBrokerServer } from "@node-wot/binding-mqtt";
 import { HttpServer } from "@node-wot/binding-http";
-import * as td from "./td/environmental-sensor.td.json";
+import td from "./td/environmental-sensor.td.json";
 import { createServer } from "http";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -42,7 +42,7 @@ servient.start().then(async (WoT) => {
     // Gestore di scrittura per cambiare tipo di serra
     exposedThing.setPropertyWriteHandler("activeGreenhouse", async (val) => {
       const newVal = await val.value() as string;
-      if (newVal === "tropical" || newVal === "desert") {
+      if (newVal === "tropical" || newVal === "mediterranean") {
         activeGreenhouse = newVal;
         console.log(`[SENSORE] Tipo di serra modificato a: ${activeGreenhouse.toUpperCase()}`);
         return undefined;
@@ -54,32 +54,41 @@ servient.start().then(async (WoT) => {
     await exposedThing.expose();
     console.log(`[SENSORE] Thing "${environmentalSensorTd.title}" online su HTTP e MQTT.`);
 
-    // Server web separato sulla porta 8081 per mostrare la Dashboard HTML
+    // Server web separato sulla porta 8081 per mostrare la Dashboard HTML e i suoi fogli di stile
     const dashboardServer = createServer((req, res) => {
+      const parsedUrl = new URL(req.url || "", `http://${req.headers.host || 'localhost'}`);
+      const pathname = parsedUrl.pathname;
       let fileName = "";
-      if (req.url === "/" || req.url === "/dashboard" || req.url === "/dashboard.html") {
+      let contentType = "text/html; charset=utf-8";
+
+      if (pathname === "/" || pathname === "/index.html") {
+        fileName = "index.html";
+      } else if (pathname === "/dashboard" || pathname === "/dashboard.html") {
         fileName = "dashboard.html";
-      } else if (req.url === "/temperature" || req.url === "/temperature.html") {
+      } else if (pathname === "/style.css") {
+        fileName = "style.css";
+        contentType = "text/css; charset=utf-8";
+      } else if (pathname === "/temperature" || pathname === "/temperature.html") {
         fileName = "temperature.html";
-      } else if (req.url === "/humidity" || req.url === "/humidity.html") {
+      } else if (pathname === "/humidity" || pathname === "/humidity.html") {
         fileName = "humidity.html";
-      } else if (req.url === "/pump" || req.url === "/pump.html") {
+      } else if (pathname === "/pump" || pathname === "/pump.html") {
         fileName = "pump.html";
       }
 
       if (fileName !== "") {
         try {
-          const htmlPath = join(__dirname, "dashboard", fileName);
-          const htmlContent = readFileSync(htmlPath, "utf-8");
-          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-          res.end(htmlContent);
+          const filePath = join(__dirname, "dashboard", fileName);
+          const content = readFileSync(filePath);
+          res.writeHead(200, { "Content-Type": contentType });
+          res.end(content);
         } catch (err) {
           res.writeHead(500);
-          res.end(`Errore caricamento pagina: ${fileName}`);
+          res.end(`Errore caricamento risorsa: ${fileName}`);
         }
       } else {
         res.writeHead(404);
-        res.end("Pagina non trovata");
+        res.end("Risorsa non trovata");
       }
     });
 
@@ -97,9 +106,9 @@ servient.start().then(async (WoT) => {
         latestTemperature = parseFloat((Math.random() * 8 + 24).toFixed(2)); // Tra 24°C e 32°C
         latestHumidity = parseFloat((Math.random() * 25 + 25).toFixed(2));    // Tra 25% e 50%
       } else {
-        // Serra Desertica: molto calda e arida
-        latestTemperature = parseFloat((Math.random() * 10 + 28).toFixed(2)); // Tra 28°C e 38°C
-        latestHumidity = parseFloat((Math.random() * 20 + 12).toFixed(2));    // Tra 12% e 32%
+        // Serra Mediterranea: temperature miti e umidità moderata
+        latestTemperature = parseFloat((Math.random() * 8 + 18).toFixed(2));  // Tra 18°C e 26°C
+        latestHumidity = parseFloat((Math.random() * 30 + 30).toFixed(2));    // Tra 30% e 60%
       }
 
       const payload = {

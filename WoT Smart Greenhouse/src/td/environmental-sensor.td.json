@@ -41,8 +41,8 @@
     "activeGreenhouse": {
       "type": "string",
       "title": "Tipo di Serra Attivo",
-      "description": "Il tipo di serra attivo che determina i parametri di automazione (es. 'tropical' o 'desert').",
-      "enum": ["tropical", "desert"],
+      "description": "Il tipo di serra attivo che determina i parametri di automazione (es. 'tropical' o 'mediterranean').",
+      "enum": ["tropical", "mediterranean"],
       "readOnly": false
     }
   },
