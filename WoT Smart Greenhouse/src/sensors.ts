@@ -74,6 +74,15 @@ servient.start().then(async (WoT) => {
         fileName = "humidity.html";
       } else if (pathname === "/pump" || pathname === "/pump.html") {
         fileName = "pump.html";
+      } else if (pathname.startsWith("/img/")) {
+        fileName = ".." + pathname;
+        if (pathname.endsWith(".png")) {
+          contentType = "image/png";
+        } else if (pathname.endsWith(".webp")) {
+          contentType = "image/webp";
+        } else {
+          contentType = "image/jpeg";
+        }
       }
 
       if (fileName !== "") {
